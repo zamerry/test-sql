@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>СУБД и PostgreSQL — рубежный контроль (100 вопросов)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      background: #f5f7fa;
+      color: #1e293b;
+      line-height: 1.5;
+      padding: 1.5rem;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 1.5rem;
+      box-shadow: 0 20px 35px -8px rgba(0,0,0,0.15);
+      padding: 2rem 2rem 3rem;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+      border-bottom: 3px solid #3b82f6;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .score-badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 0.5rem 1.25rem;
+      border-radius: 2rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      border: 1px solid #bae6fd;
+    }
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      background: #f8fafc;
+      border-radius: 1rem;
+      padding: 1.25rem 1.5rem;
+      border: 1px solid #e2e8f0;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .stats-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    .stats-item span.value {
+      font-weight: 700;
+      color: #0f172a;
+      background: #e2e8f0;
+      padding: 0.2rem 0.7rem;
+      border-radius: 1rem;
+    }
+    .button-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    button {
+      background: white;
+      border: 1.5px solid #cbd5e1;
+      padding: 0.6rem 1.4rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: 0.15s;
+      color: #1e293b;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    button:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+    button.primary {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+    button.primary:hover {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+    button.danger {
+      background: #fee2e2;
+      border-color: #fecaca;
+      color: #b91c1c;
+    }
+    button.danger:hover {
+      background: #fecaca;
+    }
+    .question-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 1.25rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      transition: 0.1s;
+    }
+    .question-card.correct {
+      border-left: 6px solid #22c55e;
+      background: #f0fdf4;
+    }
+    .question-card.incorrect {
+      border-left: 6px solid #ef4444;
+      background: #fef2f2;
+    }
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 0.9rem;
+      color: #64748b;
+      margin-bottom: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .q-num {
+      font-weight: 700;
+      color: #0f172a;
+      background: #e2e8f0;
+      padding: 0.15rem 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.85rem;
+    }
+    .q-topic {
+      background: #f1f5f9;
+      padding: 0.15rem 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.8rem;
+    }
+    .q-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0.75rem 0 1rem;
+      color: #0f172a;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin: 1rem 0 1.25rem;
+    }
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.7rem 1rem;
+      border-radius: 0.9rem;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      cursor: pointer;
+      transition: 0.1s;
+      user-select: none;
+    }
+    .option:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    .option.selected {
+      background: #dbeafe;
+      border-color: #3b82f6;
+    }
+    .option.correct-answer {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.wrong-answer {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .option input[type="radio"] {
+      margin-top: 0.2rem;
+      accent-color: #3b82f6;
+      width: 1.1rem;
+      height: 1.1rem;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .option label {
+      cursor: pointer;
+      font-size: 1rem;
+      flex: 1;
+    }
+    .explanation {
+      background: #f1f5f9;
+      border-radius: 0.9rem;
+      padding: 0.9rem 1.2rem;
+      font-size: 0.95rem;
+      color: #334155;
+      border-left: 4px solid #94a3b8;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .explanation.show {
+      display: block;
+    }
+    .explanation strong {
+      color: #0f172a;
+    }
+    .source {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 0.5rem;
+      text-align: right;
+      font-style: italic;
+    }
+    .result-bar {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-top: 0.75rem;
+      display: flex;
+      gap: 1rem;
+    }
+    .result-bar .correct-mark {
+      color: #16a34a;
+    }
+    .result-bar .incorrect-mark {
+      color: #dc2626;
+    }
+    hr {
+      border: none;
+      border-top: 2px dashed #e2e8f0;
+      margin: 1.5rem 0;
+    }
+    .footer-note {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #64748b;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 1.5rem;
+    }
+    .sticky-nav {
+      position: sticky;
+      bottom: 1rem;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(8px);
+      border-radius: 3rem;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+      padding: 0.6rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2rem;
+      border: 1px solid #e2e8f0;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    @media (max-width: 600px) {
+      body { padding: 0.75rem; }
+      .container { padding: 1.25rem; }
+      h1 { font-size: 1.5rem; }
+      .option { padding: 0.6rem 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>
+    📘 СУБД и PostgreSQL — рубежный контроль
+    <span class="score-badge" id="scoreDisplay">0 / 100</span>
+  </h1>
+
+  <div class="stats">
+    <div class="stats-item">✅ Правильно: <span class="value" id="correctCount">0</span></div>
+    <div class="stats-item">❌ Ошибок: <span class="value" id="incorrectCount">0</span></div>
+    <div class="stats-item">📝 Отвечено: <span class="value" id="answeredCount">0</span></div>
+    <div class="button-group">
+      <button class="primary" id="checkBtn">Проверить все</button>
+      <button class="danger" id="resetBtn">Сбросить</button>
+      <button id="toggleExplainBtn">Показать пояснения</button>
+    </div>
+  </div>
+
+  <div id="questionsContainer"></div>
+
+  <div class="sticky-nav">
+    <span>🔍 <span id="progressText">0 из 100 answered</span></span>
+    <div class="button-group">
+      <button id="scrollTopBtn">Наверх</button>
+      <button class="primary" id="checkBtn2">Проверить</button>
+    </div>
+  </div>
+  <div class="footer-note">
+    PostgreSQL 16 · рубежный контроль · 100 вопросов
+  </div>
+</div>
+
+<script>
+  // ======================== ДАННЫЕ ========================
+  const questionsData = [
+    { id: 1, topic: "1–2", type: "Определение", question: "Какое утверждение правильно различает базу данных и СУБД?", options: ["База данных — организованные данные, СУБД — программа для управления ими", "База данных — программа, СУБД — одна таблица", "СУБД — набор строк, база данных — планировщик запросов", "База данных — индекс, СУБД — резервная копия", "База данных и СУБД обозначают только SQL-скрипт"], correct: 0, explanation: "PostgreSQL управляет базами данных, но сам не является одной конкретной базой.", source: "Недели 1–2, с. 3" },
+    { id: 2, topic: "1–2", type: "Теория", question: "Несколько приложений используют общие сведения о студентах. Какое преимущество СУБД особенно важно по сравнению с независимыми файлами?", options: ["Обязательное хранение каждой таблицы в текстовом файле", "Автоматическая отмена всех ошибок предметной области", "Полное отсутствие необходимости в резервных копиях", "Отказ от разграничения прав пользователей", "Централизованное управление связями, целостностью и конкурентным доступом"], correct: 4, explanation: "СУБД предоставляет общие механизмы контроля связанных данных.", source: "Недели 1–2, с. 3–4" },
+    { id: 3, topic: "1–2", type: "Определение", question: "Как правильно соотнести понятия реляционной модели?", options: ["Кортеж — индекс, атрибут — строка, домен — транзакция", "Кортеж — ограничение, атрибут — файл, домен — представление", "Кортеж — база данных, атрибут — запрос, домен — пользователь", "Кортеж — строка, атрибут — столбец, домен — допустимые значения", "Кортеж — столбец, атрибут — таблица, домен — индекс"], correct: 3, explanation: "Эти понятия описывают структуру отношения и допустимость его значений.", source: "Недели 1–2, с. 4" },
+    { id: 4, topic: "1–2", type: "Ситуация", question: "Название факультета повторяется в каждой записи студента. После переименования часть записей содержит старое название. Какая аномалия возникла?", options: ["Аномалия удаления всех студентов", "Аномалия обновления", "Аномалия только сортировки", "Аномалия соединения без условий", "Аномалия только индексации"], correct: 1, explanation: "Один факт пришлось менять в нескольких строках, что привело к противоречию.", source: "Недели 1–2, с. 4–5" },
+    { id: 5, topic: "1–2", type: "Ситуация", question: "В одной ячейке phones хранится список отдельных номеров, по каждому из которых нужен поиск. Какое изменение соответствует 1НФ в описанной модели?", options: ["Добавить индекс, сохранив список в одной ячейке", "Хранить номера отдельными строками в связанной таблице телефонов", "Создать VIEW, не изменяя способ хранения номеров", "Увеличить длину текстового столбца phones", "Заменить запятые между номерами точками с запятой"], correct: 1, explanation: "Самостоятельные элементы коллекции следует представить отдельными строками.", source: "Недели 1–2, с. 5" },
+    { id: 6, topic: "1–2", type: "Ситуация", question: "В Enrollment ключ — (student_id, subject_id), а student_name зависит только от student_id. Какую проблему показывает этот пример?", options: ["Отсутствие любых функциональных зависимостей", "Нарушение 1НФ только из-за составного ключа", "Нарушение ссылочной целостности из-за имени", "Частичную зависимость, нарушающую 2НФ", "Транзитивную зависимость только от grade"], correct: 3, explanation: "Неключевой атрибут зависит от части составного ключа.", source: "Недели 1–2, с. 5" },
+    { id: 7, topic: "1–2", type: "Ситуация", question: "В students ключ student_id, а group_name определяется неключевым group_id. Какое решение устраняет описанную проблему 3НФ?", options: ["Вынести сведения о группе в groups и сохранить group_id в students", "Сделать group_name длиннее", "Удалить student_id и идентифицировать студентов по имени", "Добавить DEFAULT к group_name без изменения структуры", "Дублировать group_name ещё в одном столбце students"], correct: 0, explanation: "Сведения о группе отделяются от сведений о студенте.", source: "Недели 1–2, с. 5" },
+    { id: 8, topic: "1–2", type: "Теория", question: "Какой тип подходит для денежной суммы, если требуется точное хранение двух десятичных знаков?", options: ["DOUBLE PRECISION", "NUMERIC(12,2)", "DATE", "BOOLEAN", "REAL"], correct: 1, explanation: "NUMERIC хранит точные десятичные значения заданной точности.", source: "Недели 1–2, с. 6" },
+    { id: 9, topic: "1–2", type: "Команда", question: "Какой тип следует выбрать для birth_date, если нужно хранить дату рождения без времени?", options: ["INTEGER", "DATE", "TIMESTAMP", "UUID", "BOOLEAN"], correct: 1, explanation: "DATE предназначен для даты без времени суток.", source: "Недели 1–2, с. 6" },
+    { id: 10, topic: "1–2", type: "Теория", question: "Какое свойство обязательно обеспечивает PRIMARY KEY?", options: ["Автоматическое создание внешних ключей во всех таблицах", "Автоматическое обновление имени студента", "Уникальность только среди значений NULL", "Уникальность идентификатора строки и запрет NULL", "Обязательную сортировку результата любого SELECT"], correct: 3, explanation: "Первичный ключ однозначно идентифицирует строку и не допускает NULL.", source: "Недели 1–2, с. 6" },
+    { id: 11, topic: "1–2", type: "Ситуация", question: "students.group_id ссылается на groups.group_id. Группы 999 нет. Что произойдёт при вставке студента с group_id = 999 при действующем FK?", options: ["group_id автоматически заменится на NULL", "Группа 999 автоматически создастся", "Студент вставится, а FK будет удалён", "Будут удалены все существующие группы", "Вставка будет отклонена из-за нарушения внешнего ключа"], correct: 4, explanation: "FOREIGN KEY проверяет наличие соответствующей родительской записи.", source: "Недели 1–2, с. 6, 9" },
+    { id: 12, topic: "1–2", type: "Команда", question: "Какое определение grade запрещает NULL и ограничивает ненулевые оценки диапазоном 0–100?", options: ["grade INTEGER NOT NULL CHECK (grade BETWEEN 0 AND 100)", "grade TEXT NOT NULL", "grade INTEGER UNIQUE", "grade INTEGER CHECK (grade >= 0)", "grade INTEGER DEFAULT 100"], correct: 0, explanation: "NOT NULL запрещает отсутствие значения, CHECK задаёт обе границы.", source: "Недели 1–2, с. 7" },
+    { id: 13, topic: "1–2", type: "Ситуация", question: "is_active объявлен BOOLEAN NOT NULL DEFAULT TRUE. Что получится, если при INSERT этот столбец не указан?", options: ["Будет записано NULL", "Вставка обязательно завершится ошибкой", "Будет записано TRUE", "Всегда будет записано FALSE", "Будет создан отдельный столбец is_active"], correct: 2, explanation: "DEFAULT используется, когда значение столбца не передано.", source: "Недели 1–2, с. 9–10" },
+    { id: 14, topic: "1–2", type: "Теория", question: "Почему индекс не следует автоматически создавать на каждом столбце?", options: ["Индекс заменяет тип данных столбца", "Каждый индекс запрещает INSERT", "Индексы занимают место и требуют обслуживания при изменениях данных", "После индекса нельзя использовать JOIN", "Индекс всегда изменяет содержимое строк"], correct: 2, explanation: "Пользу индекса сопоставляют с затратами хранения и обновления.", source: "Недели 1–2, с. 6–7" },
+    { id: 15, topic: "1–2", type: "Команда", question: "Как создать индекс по students.group_id?", options: ["CREATE INDEX students WHERE group_id;", "INSERT INDEX INTO students(group_id);", "ALTER INDEX students ADD group_id;", "CREATE INDEX idx_students_group ON students(group_id);", "CREATE TABLE idx_students_group AS INDEX group_id;"], correct: 3, explanation: "CREATE INDEX задаёт имя индекса, таблицу и индексируемые столбцы.", source: "Недели 1–2, с. 6" },
+    { id: 16, topic: "1–2", type: "Теория", question: "Какой набор состоит только из команд изменения структуры БД — DDL?", options: ["SELECT, WHERE, ORDER BY", "CREATE, ALTER, DROP", "BEGIN, COMMIT, ROLLBACK", "INSERT, UPDATE, DELETE", "OPEN, FETCH, CLOSE"], correct: 1, explanation: "DDL определяет и изменяет объекты схемы.", source: "Недели 1–2, с. 8" },
+    { id: 17, topic: "1–2", type: "Команда", question: "Что делает CREATE DATABASE university_db;?", options: ["Создаёт VIEW с именем university_db", "Создаёт базу и все учебные таблицы автоматически", "Создаёт только таблицу university_db", "Создаёт базу данных, после чего таблицы нужно создавать отдельно", "Подключает пользователя к любой существующей базе"], correct: 3, explanation: "Создание базы не означает автоматическое создание её таблиц.", source: "Недели 1–2, с. 8" },
+    { id: 18, topic: "1–2", type: "Ситуация", question: "groups содержит FK на faculties, который задаётся в CREATE TABLE. Какой порядок создания подходит?", options: ["Сначала только students, остальные объекты появятся сами", "Сначала groups, затем faculties без изменения FK", "Порядок не имеет значения при заданном FK", "Обе таблицы нужно создавать через INSERT", "Сначала faculties, затем groups"], correct: 4, explanation: "При объявлении ссылки родительская таблица должна уже существовать.", source: "Недели 1–2, с. 8" },
+    { id: 19, topic: "1–2", type: "Команда", question: "Как добавить email типа VARCHAR(255) в существующую students?", options: ["CREATE DATABASE students.email VARCHAR(255);", "INSERT INTO students COLUMN email VARCHAR(255);", "ALTER COLUMN students CREATE email VARCHAR(255);", "UPDATE students ADD email VARCHAR(255);", "ALTER TABLE students ADD COLUMN email VARCHAR(255);"], correct: 4, explanation: "ALTER TABLE изменяет структуру существующей таблицы.", source: "Недели 1–2, с. 9" },
+    { id: 20, topic: "1–2", type: "Теория", question: "Чем DROP TABLE students отличается от удаления строк через DELETE FROM students?", options: ["DROP TABLE удаляет объект таблицы, DELETE удаляет строки, сохраняя таблицу", "DELETE удаляет определение таблицы, DROP — только данные", "DROP TABLE автоматически архивирует строки в VIEW", "DROP TABLE удаляет только строки с NULL", "Обе команды всегда сохраняют таблицу и её строки"], correct: 0, explanation: "Структурное удаление объекта и удаление данных — разные действия.", source: "Недели 1–2, с. 9" },
+    { id: 21, topic: "1–2", type: "Команда", question: "Какая команда вставляет две записи в faculties(faculty_name)?", options: ["INSERT faculties SET faculty_name = ('CS', 'IT');", "CREATE faculties (faculty_name) AS ('CS'), ('IT');", "UPDATE faculties (faculty_name) VALUES ('CS'), ('IT');", "INSERT INTO faculties (faculty_name) VALUES ('CS', 'IT');", "INSERT INTO faculties (faculty_name) VALUES ('CS'), ('IT');"], correct: 4, explanation: "Каждый отдельный набор VALUES описывает одну строку.", source: "Недели 1–2, с. 9" },
+    { id: 22, topic: "1–2", type: "Теория", question: "Для чего используется GENERATED ALWAYS AS IDENTITY у числового идентификатора?", options: ["Для копирования значения из внешнего ключа", "Для запрета любых вставок", "Для автоматической генерации значения идентификатора при обычной вставке без его указания", "Для преобразования всех столбцов в TEXT", "Для автоматической генерации названий таблиц"], correct: 2, explanation: "IDENTITY связано с генерацией значений столбца.", source: "Недели 1–2, с. 8–9" },
+    { id: 23, topic: "1–2", type: "Теория", question: "К какому уровню абстракции относится общая логическая схема Students, Groups и их связей?", options: ["Концептуальному", "Уровню отдельного курсора", "Только внутреннему", "Уровню аудита триггеров", "Только внешнему"], correct: 0, explanation: "Концептуальный уровень описывает логическую структуру всей БД.", source: "Недели 1–2, с. 10" },
+    { id: 24, topic: "1–2", type: "Определение", question: "Почему SQL называют декларативным языком?", options: ["Пользователь обязан сам выбирать алгоритм каждого JOIN", "SQL предназначен только для объявления переменных", "Запрос описывает нужный результат, а СУБД выбирает способ выполнения", "SQL не позволяет изменять данные", "Каждый запрос задаёт порядок чтения всех страниц диска"], correct: 2, explanation: "Декларативный запрос выражает требование к результату.", source: "Недели 1–2, с. 10–11" },
+    { id: 25, topic: "3", type: "Команда", question: "Как выбрать только full_name и email из students?", options: ["SELECT full_name, email FROM students;", "FROM students SELECT ONLY email;", "UPDATE students SET full_name, email;", "SELECT students FROM full_name, email;", "SELECT * FROM students;"], correct: 0, explanation: "Список после SELECT определяет возвращаемые столбцы.", source: "Лекция 3, с. 2" },
+    { id: 26, topic: "3", type: "Теория", question: "Что изменяет AS student_name в SELECT full_name AS student_name FROM students;?", options: ["Тип full_name на INTEGER", "Значение full_name во всех строках", "Название таблицы students", "Имя исходного столбца таблицы", "Название столбца в результате запроса"], correct: 4, explanation: "Псевдоним влияет на результат, а не на структуру исходной таблицы.", source: "Лекция 3, с. 2" },
+    { id: 27, topic: "3", type: "Команда", question: "Как выбрать студентов групп 1 или 2, у которых email указан?", options: ["WHERE group_id IN (1, 2) AND email = NULL", "WHERE group_id IN (1, 2) OR email IS NOT NULL", "WHERE group_id = 1 OR group_id = 2 AND email IS NULL", "WHERE group_id IN (1, 2) AND email IS NOT NULL", "WHERE group_id = 1 AND group_id = 2 AND email IS NOT NULL"], correct: 3, explanation: "IN задаёт допустимые группы, AND требует указанного email.", source: "Лекция 3, с. 3" },
+    { id: 28, topic: "3", type: "Ситуация", question: "При ненулевых group_id и email в условии WHERE group_id = 1 OR group_id = 2 AND email IS NOT NULL какие студенты выбираются?", options: ["Все из обеих групп независимо от email", "Только с email из обеих групп", "Только с email из группы 1", "Только без email из группы 1", "Все из группы 1 и только с email из группы 2"], correct: 4, explanation: "AND имеет более высокий приоритет, чем OR; для другого смысла нужны скобки.", source: "Лекция 3, с. 3" },
+    { id: 29, topic: "3", type: "Расчёт", question: "В grades есть значения 69, 70, 80, 90, 91. Какие попадут под grade BETWEEN 70 AND 90?", options: ["Только 80", "69, 70, 80", "70, 80 без 90", "70, 80, 90", "80, 90, 91"], correct: 3, explanation: "BETWEEN включает обе границы диапазона.", source: "Лекция 3, с. 3–4" },
+    { id: 30, topic: "3", type: "Команда", question: "Какой шаблон LIKE находит строки, начинающиеся с «Иван»?", options: ["LIKE '%Иван%' только для начала строки", "LIKE 'Иван_' только для любой длины", "LIKE 'Иван%'", "LIKE '%Иван'", "LIKE '_Иван'"], correct: 2, explanation: "Знак % после текста допускает произвольное продолжение.", source: "Лекция 3, с. 4" },
+    { id: 31, topic: "3", type: "Теория", question: "Что обозначает символ _ в шаблоне LIKE?", options: ["Только пробел", "Ровно один произвольный символ", "Любое количество символов", "Отсутствующее значение NULL", "Только цифру"], correct: 1, explanation: "Подчёркивание соответствует одному символу, а % — произвольному количеству.", source: "Лекция 3, с. 4" },
+    { id: 32, topic: "3", type: "Команда", question: "Как искать «иван» в любой части full_name без учёта регистра?", options: ["WHERE full_name LIKE 'иван'", "WHERE full_name ILIKE '%иван%'", "WHERE full_name IS 'иван'", "WHERE full_name IN ('%иван%')", "WHERE full_name = '%иван%'"], correct: 1, explanation: "ILIKE выполняет сопоставление шаблона без учёта регистра.", source: "Лекция 3, с. 4" },
+    { id: 33, topic: "3", type: "Команда", question: "Как корректно найти студентов с неизвестным email?", options: ["WHERE email = ''", "WHERE email IS NULL", "WHERE email = 0", "WHERE email = 'NULL'", "WHERE email = NULL"], correct: 1, explanation: "NULL проверяется специальным предикатом IS NULL.", source: "Лекция 3, с. 4" },
+    { id: 34, topic: "3", type: "Теория", question: "Что удаляет DISTINCT в SELECT DISTINCT group_id, full_name FROM students;?", options: ["Дубликаты из исходной таблицы навсегда", "Повторяющиеся комбинации group_id и full_name в результате", "Все строки, кроме первой строки таблицы", "Все строки с NULL в любом столбце", "Любые строки с одинаковым group_id независимо от имени"], correct: 1, explanation: "Уникальность оценивается по всей выбранной комбинации значений.", source: "Лекция 3, с. 4–5" },
+    { id: 35, topic: "3", type: "Команда", question: "Как отсортировать оценки от наибольшей к наименьшей?", options: ["ORDER BY grade ASC", "WHERE grade DESC", "GROUP BY grade DESC", "ORDER BY grade DESC", "HAVING grade DESC"], correct: 3, explanation: "DESC задаёт порядок по убыванию.", source: "Лекция 3, с. 5" },
+    { id: 36, topic: "3", type: "Теория", question: "Как работает ORDER BY group_id ASC, full_name ASC?", options: ["Всегда случайно внутри каждой группы", "Только по имени, первый столбец игнорируется", "Объединяет студентов с одинаковыми именами в одну строку", "Сначала по группе, внутри одинаковых групп — по имени", "Сначала по имени, затем по группе"], correct: 3, explanation: "Второй ключ сортировки используется при равенстве первого.", source: "Лекция 3, с. 5" },
+    { id: 37, topic: "3", type: "Команда", question: "Как изменить email только у student_id = 7?", options: ["UPDATE students WHERE email = 'new@example.com' SET student_id = 7;", "UPDATE students SET email = 'new@example.com' WHERE student_id = 7;", "ALTER TABLE students SET email = 'new@example.com' WHERE student_id = 7;", "INSERT INTO students SET email = 'new@example.com' WHERE student_id = 7;", "UPDATE students SET email = 'new@example.com';"], correct: 1, explanation: "SET задаёт новое значение, WHERE ограничивает обновление нужной строкой.", source: "Лекция 3, с. 5" },
+    { id: 38, topic: "3", type: "Ситуация", question: "Что произойдёт при UPDATE students SET email = 'test@example.com';, если нет блокирующих ограничений или триггеров?", options: ["Будет предпринято обновление email всех строк", "Обновятся только строки с NULL", "Обновятся только строки последнего SELECT", "Появится новый столбец email", "Будет обновлена только первая строка"], correct: 0, explanation: "Без WHERE команда не ограничивает множество обновляемых строк.", source: "Лекция 3, с. 5–6" },
+    { id: 39, topic: "3", type: "Ситуация", question: "Что делает DELETE FROM students; при отсутствии препятствующих ограничений и триггеров?", options: ["Удаляет только одну произвольную строку", "Очищает только внешний ключ", "Удаляет таблицу вместе с определением", "Удаляет все строки, сохраняя объект таблицы", "Удаляет только строки без email"], correct: 3, explanation: "DELETE без WHERE удаляет все строки таблицы.", source: "Лекция 3, с. 6" },
+    { id: 40, topic: "3", type: "Теория", question: "Какой порядок проверки соответствует безопасному изменению данных в учебной работе?", options: ["SELECT любой таблицы → UPDATE без проверки условия", "SELECT с тем же WHERE → проверка строк → UPDATE → повторный SELECT", "UPDATE без WHERE → SELECT → добавление условия", "DROP TABLE → INSERT → SELECT", "COMMIT → UPDATE → ROLLBACK как гарантированный откат"], correct: 1, explanation: "Предварительная выборка помогает проверить область изменения.", source: "Лекция 3, с. 5–6" },
+    { id: 41, topic: "3", type: "Определение", question: "Как различаются селекция и проекция реляционной алгебры?", options: ["Обе операции определяют только порядок строк", "Селекция выбирает столбцы, проекция — строки", "Обе операции только объединяют два отношения", "Селекция выбирает строки, проекция — атрибуты", "Селекция удаляет таблицу, проекция создаёт индекс"], correct: 3, explanation: "WHERE соответствует выбору строк, список SELECT — выбору атрибутов.", source: "Лекция 3, с. 7" },
+    { id: 42, topic: "3", type: "Расчёт", question: "Сколько строк вернёт SELECT 1 AS n UNION ALL SELECT 1 AS n;?", options: ["1", "2", "Команда обязательно ошибочна", "3", "0"], correct: 1, explanation: "UNION ALL сохраняет обе одинаковые строки.", source: "Лекция 3, с. 7–8" },
+    { id: 43, topic: "3", type: "Теория", question: "Какая операция возвращает значения, присутствующие в обоих результатах SELECT?", options: ["ORDER BY", "LEFT JOIN без условия", "EXCEPT", "UNION ALL", "INTERSECT"], correct: 4, explanation: "INTERSECT вычисляет пересечение результатов.", source: "Лекция 3, с. 8" },
+    { id: 44, topic: "3", type: "Команда", question: "Как получить student_id студентов, отсутствующих в grades, с помощью операции над множествами?", options: ["SELECT student_id FROM grades EXCEPT SELECT student_id FROM students;", "SELECT student_id FROM students INTERSECT SELECT student_id FROM grades;", "SELECT student_id FROM students EXCEPT SELECT student_id FROM grades;", "SELECT student_id FROM students UNION ALL SELECT student_id FROM grades;", "SELECT student_id FROM students UNION SELECT student_id FROM grades;"], correct: 2, explanation: "EXCEPT возвращает элементы первого результата, которых нет во втором.", source: "Лекция 3, с. 8" },
+    { id: 45, topic: "4", type: "Теория", question: "Для чего служит ON в JOIN students s JOIN groups g ON s.group_id = g.group_id?", options: ["Создаёт постоянный внешний ключ", "Указывает направление сортировки", "Задаёт условие соответствия строк двух таблиц", "Переименовывает исходные столбцы", "Определяет среднее значение"], correct: 2, explanation: "ON описывает, какие строки связываются в результате запроса.", source: "Лекция 4, с. 3–4" },
+    { id: 46, topic: "4", type: "Теория", question: "Какие строки возвращает INNER JOIN по заданному условию?", options: ["Все несовпавшие строки без совпавших", "Все строки левой таблицы независимо от соответствия", "Всегда декартово произведение", "Все строки правой таблицы независимо от соответствия", "Только пары строк с найденным соответствием"], correct: 4, explanation: "Внутреннее соединение оставляет совпавшие строки.", source: "Лекция 4, с. 4" },
+    { id: 47, topic: "4", type: "Ситуация", question: "У студента нет оценок. Что произойдёт в students s LEFT JOIN grades gr ON s.student_id = gr.student_id?", options: ["Студент обязательно исчезнет из результата", "Запрос всегда завершится ошибкой", "Соединение автоматически вставит оценку NULL", "Будет создана оценка 0 в grades", "Студент сохранится, а столбцы gr будут NULL"], correct: 4, explanation: "LEFT JOIN сохраняет строки слева без соответствия справа.", source: "Лекция 4, с. 4" },
+    { id: 48, topic: "4", type: "Команда", question: "Как найти студентов без связанных записей grades, если grade_id — первичный ключ?", options: ["INNER JOIN grades gr ON s.student_id = gr.student_id WHERE gr.grade_id IS NULL", "LEFT JOIN grades gr ON s.student_id = gr.student_id WHERE gr.grade_id = NULL", "LEFT JOIN grades gr ON s.student_id = gr.student_id WHERE gr.grade_id IS NULL", "LEFT JOIN grades gr ON s.student_id = gr.student_id WHERE s.student_id IS NULL", "LEFT JOIN grades gr ON s.student_id = gr.student_id WHERE gr.grade = 0"], correct: 2, explanation: "NULL в первичном ключе правой части результата означает отсутствие совпавшей строки.", source: "Лекция 4, с. 4" },
+    { id: 49, topic: "4", type: "Теория", question: "Как переписать A RIGHT JOIN B ON A.id = B.a_id, сохранив смысл соединения?", options: ["B LEFT JOIN A ON A.id = B.a_id", "A INNER JOIN B ON A.id = B.a_id", "B INNER JOIN A ON A.id = B.a_id", "A LEFT JOIN B ON A.id = B.a_id", "A FULL JOIN B ON A.id = B.a_id"], correct: 0, explanation: "Нужно поменять стороны местами и использовать LEFT JOIN.", source: "Лекция 4, с. 4" },
+    { id: 50, topic: "4", type: "Ситуация", question: "Нужно сохранить и совпавшие строки, и строки без пары с обеих сторон. Какое соединение подходит?", options: ["JOIN с условием, всегда ложным, без внешнего соединения", "RIGHT JOIN только с сохранением правой стороны", "LEFT JOIN только с сохранением левой стороны", "INNER JOIN", "FULL JOIN"], correct: 4, explanation: "FULL JOIN сохраняет несовпавшие строки обеих таблиц.", source: "Лекция 4, с. 4" },
+    { id: 51, topic: "4", type: "Расчёт", question: "Один студент имеет четыре оценки. Сколько строк даст INNER JOIN этого студента с его grades?", options: ["4", "1", "2", "0", "5"], correct: 0, explanation: "Каждая связанная оценка образует отдельную строку результата.", source: "Лекция 4, с. 7–8" },
+    { id: 52, topic: "4", type: "Теория", question: "В таблице три строки: grade = 80, NULL, 100. Чему равны COUNT(*) и COUNT(grade)?", options: ["3 и 2", "2 и 3", "3 и 3", "1 и 2", "2 и 2"], correct: 0, explanation: "COUNT(*) считает строки, COUNT(grade) — только ненулевые значения.", source: "Лекция 4, с. 5" },
+    { id: 53, topic: "4", type: "Расчёт", question: "В grades есть оценки 70, 80 и 90. Чему равны AVG(grade) и SUM(grade)?", options: ["240 и 80", "70 и 90", "80 и 240", "90 и 240", "80 и 3"], correct: 2, explanation: "Среднее равно сумме 240, делённой на количество 3.", source: "Лекция 4, с. 5" },
+    { id: 54, topic: "4", type: "Теория", question: "Какова роль GROUP BY student_id при вычислении AVG(grade)?", options: ["Присваивать всем студентам один общий средний балл", "Создавать внешний ключ student_id", "Вычислять среднее отдельно для каждого student_id", "Удалять студентов без изменения результата", "Сортировать все оценки без вычислений"], correct: 2, explanation: "GROUP BY формирует группы для отдельных агрегатов.", source: "Лекция 4, с. 5–6" },
+    { id: 55, topic: "4", type: "Команда", question: "Как оставить только студентов, у которых средняя оценка выше 85?", options: ["WHERE grade > 85 без агрегирования", "GROUP BY student_id HAVING AVG(grade) > 85", "ORDER BY student_id HAVING grade > 85", "GROUP BY student_id WHERE grade > 85", "WHERE AVG(grade) > 85 GROUP BY student_id"], correct: 1, explanation: "Условие на результат агрегата применяется через HAVING.", source: "Лекция 4, с. 6" },
+    { id: 56, topic: "4", type: "Теория", question: "Как различаются WHERE и HAVING?", options: ["HAVING изменяет строки исходной таблицы", "WHERE работает только вместе с COUNT", "Оба оператора применяются только после ORDER BY", "WHERE фильтрует группы, HAVING — только столбцы", "WHERE фильтрует строки до группировки, HAVING — группы после неё"], correct: 4, explanation: "Они действуют на разных этапах логической обработки.", source: "Лекция 4, с. 6" },
+    { id: 57, topic: "4", type: "Ситуация", question: "Отчёт строится из groups g LEFT JOIN students s. Чем считать студентов, чтобы пустая группа получила 0?", options: ["COUNT(s.student_id)", "COUNT(*)", "SUM(g.group_id)", "COUNT(g.group_id)", "MAX(g.group_id)"], correct: 0, explanation: "Первичный ключ студента отсутствует в пустой группе, и COUNT не учитывает NULL.", source: "Лекция 4, с. 6" },
+    { id: 58, topic: "4", type: "Ситуация", question: "После JOIN студентов с оценками нужно посчитать число разных студентов. Какой агрегат предотвращает повторный счёт?", options: ["SUM(s.student_id)", "COUNT(gr.grade)", "AVG(s.student_id)", "COUNT(*)", "COUNT(DISTINCT s.student_id)"], correct: 4, explanation: "Один студент может повторяться из-за нескольких оценок.", source: "Лекция 4, с. 7" },
+    { id: 59, topic: "4", type: "Ситуация", question: "У двух дисциплин одинаковое название, но разные subject_id. Как не объединить их статистику в одну группу?", options: ["Сортировать по subject_name без группировки", "Заменить все subject_id одним значением", "Использовать DISTINCT только для AVG", "Группировать по subject_id и subject_name", "Группировать только по subject_name"], correct: 3, explanation: "Идентификатор различает сущности с одинаковыми названиями.", source: "Лекция 4, с. 6, 9" },
+    { id: 60, topic: "4", type: "Команда", question: "Как вычислить минимальную и максимальную оценку каждой дисциплины?", options: ["SELECT DISTINCT subject_id, grade FROM grades;", "SELECT MIN(subject_id), MAX(subject_id) FROM grades GROUP BY grade;", "SELECT subject_id, MIN(grade), MAX(grade) FROM grades GROUP BY subject_id;", "SELECT subject_id, MIN(grade), MAX(grade) FROM grades WHERE GROUP BY subject_id;", "SELECT subject_id, MIN(grade), MAX(grade) FROM grades ORDER BY subject_id;"], correct: 2, explanation: "Агрегаты применяются к группам по дисциплине.", source: "Лекция 4, с. 6" },
+    { id: 61, topic: "4", type: "Определение", question: "Что означает функциональная зависимость A → B?", options: ["Одинаковые значения A требуют одинакового значения B", "Каждое значение A обязательно уникально в таблице", "Одинаковые значения B всегда требуют одинакового A", "A всегда является внешним ключом", "A и B должны иметь один тип данных"], correct: 0, explanation: "A однозначно определяет B; обратное утверждение не следует автоматически.", source: "Лекция 4, с. 8" },
+    { id: 62, topic: "4", type: "Теория", question: "Почему full_name обычно не определяет student_id однозначно?", options: ["У разных студентов могут совпадать ФИО", "Любое имя содержит NULL", "Все ФИО автоматически становятся уникальными", "student_id не может быть первичным ключом", "Функциональные зависимости допустимы только для чисел"], correct: 0, explanation: "Уникальность имени не гарантируется предметной областью.", source: "Лекция 4, с. 8" },
+    { id: 63, topic: "4", type: "Ситуация", question: "Какая зависимость соответствует таблице groups с первичным ключом group_id?", options: ["group_name → faculty_id при любых ограничениях", "faculty_id → все единственные значения group_name", "faculty_id → group_id при связи 1:N", "group_id → group_name, faculty_id", "group_name → group_id без условия уникальности"], correct: 3, explanation: "Ключ строки определяет её остальные атрибуты.", source: "Лекция 4, с. 8" },
+    { id: 64, topic: "4", type: "Теория", question: "Какой логический порядок этапов запроса корректен?", options: ["HAVING → WHERE → JOIN → GROUP BY → SELECT", "FROM/JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY", "GROUP BY → WHERE → FROM → SELECT → HAVING", "SELECT → ORDER BY → HAVING → FROM → WHERE", "ORDER BY → SELECT → FROM → HAVING → GROUP BY"], correct: 1, explanation: "Порядок логической обработки объясняет различие WHERE и HAVING.", source: "Лекция 4, с. 9" },
+    { id: 65, topic: "5", type: "Определение", question: "Что хранится в обычном VIEW?", options: ["История всех транзакций", "Только резервная копия схемы", "Только индекс исходной таблицы", "Определение запроса, результат которого строится при обращении", "Независимая неизменяемая копия всех строк"], correct: 3, explanation: "Обычное представление является сохранённым запросом, а не материализованным снимком.", source: "Лекция 5, с. 1–2" },
+    { id: 66, topic: "5", type: "Ситуация", question: "После создания обычного VIEW изменили строки исходной таблицы и выполнили новый запрос к VIEW. Какой вывод верен?", options: ["Результат отражает данные базовых таблиц согласно видимости текущей транзакции", "VIEW автоматически превращается в отдельную таблицу", "VIEW всегда сохраняет старые строки навсегда", "VIEW необходимо обязательно пересоздать после каждого UPDATE", "Изменения исходной таблицы автоматически запрещены"], correct: 0, explanation: "Обычный VIEW выполняет сохранённый запрос к исходным данным.", source: "Лекция 5, с. 1–2" },
+    { id: 67, topic: "5", type: "Команда", question: "Какая команда определяет представление активных студентов?", options: ["CALL VIEW active_students(is_active);", "CREATE INDEX active_students AS SELECT * FROM students;", "CREATE TABLE active_students VIEW students;", "INSERT VIEW active_students FROM students;", "CREATE VIEW active_students AS SELECT * FROM students WHERE is_active = TRUE;"], correct: 4, explanation: "CREATE VIEW связывает имя представления с SQL-запросом.", source: "Лекция 5, с. 1" },
+    { id: 68, topic: "5", type: "Теория", question: "Как различаются типичные вызовы функции и процедуры PostgreSQL?", options: ["Оба объекта вызываются только через CREATE", "Функция запускается только триггером, процедура — только JOIN", "Процедуру вызывают через SELECT как скалярное выражение", "Функцию вызывают через CALL, процедуру — через WHERE", "Функцию вызывают через SELECT, процедуру — через CALL"], correct: 4, explanation: "Способ вызова отражает разные типы программируемых объектов.", source: "Лекция 5, с. 2–3" },
+    { id: 69, topic: "5", type: "Команда", question: "Что означает RETURNS NUMERIC в определении функции?", options: ["Количество выполняемых транзакций", "Тип всех столбцов исходной таблицы", "Обязательное число входных параметров", "Тип возвращаемого результата", "Тип имени функции"], correct: 3, explanation: "RETURNS задаёт тип результата функции.", source: "Лекция 5, с. 2" },
+    { id: 70, topic: "5", type: "Теория", question: "Для чего служит SELECT AVG(grade) INTO v_average внутри PL/pgSQL?", options: ["Для записи результата вычисления в локальную переменную", "Для создания таблицы v_average в этом контексте", "Для добавления индекса на grade", "Для фиксации транзакции", "Для изменения grade во всех строках"], correct: 0, explanation: "В PL/pgSQL INTO используется для присваивания результата переменной.", source: "Лекция 5, с. 2" },
+    { id: 71, topic: "5", type: "Команда", question: "Какой оператор возвращает набор строк запроса из функции RETURNS TABLE?", options: ["COMMIT SELECT ...;", "RETURN TABLE CREATE ...;", "FETCH ALL AS FUNCTION;", "RAISE NOTICE SELECT ...;", "RETURN QUERY SELECT ...;"], correct: 4, explanation: "RETURN QUERY добавляет результат запроса к возвращаемому набору.", source: "Лекция 5, с. 2" },
+    { id: 72, topic: "5", type: "Ситуация", question: "Процедура add_grade проверяет student_id, но в grades также есть FK. Почему полезны оба механизма?", options: ["FK нужен только для ускорения AVG", "Ограничение применяется только внутри CALL", "Процедура разрешает любые записи в обход FK", "Проверки процедуры автоматически заменяют все ограничения", "Процедура даёт понятные проверки, а FK защищает и прямые записи вне процедуры"], correct: 4, explanation: "Ссылочная целостность должна сохраняться независимо от пути записи.", source: "Лекция 5, с. 3" },
+    { id: 73, topic: "5", type: "Теория", question: "Какое различие между RAISE NOTICE и RAISE EXCEPTION верно?", options: ["NOTICE фиксирует транзакцию", "EXCEPTION автоматически исправляет FK", "Оба оператора создают VIEW", "NOTICE выводит сообщение, EXCEPTION поднимает ошибку, которую можно обработать", "NOTICE всегда откатывает транзакцию, EXCEPTION только печатает текст"], correct: 3, explanation: "Сообщение и исключение имеют разное влияние на выполнение.", source: "Лекция 5, с. 3–4" },
+    { id: 74, topic: "5", type: "Теория", question: "Чем BEGIN ... END блока PL/pgSQL отличается от SQL BEGIN транзакции?", options: ["SQL BEGIN служит только для объявления переменных", "END блока равен COMMIT", "Первое ограничивает исполняемый блок, второе начинает транзакцию", "BEGIN блока создаёт базу данных", "Оба всегда фиксируют изменения"], correct: 2, explanation: "Одинаковое слово используется в разных синтаксических контекстах.", source: "Лекция 5, с. 3" },
+    { id: 75, topic: "5", type: "Команда", question: "Какой порядок работы с явно открываемым курсором корректен?", options: ["COMMIT → CLOSE → FETCH", "OPEN → DROP VIEW → RETURN QUERY без FETCH", "OPEN → FETCH и обработка → CLOSE", "CLOSE → FETCH → OPEN", "FETCH → CREATE TABLE → OPEN"], correct: 2, explanation: "Открытый курсор предоставляет строки через FETCH и затем закрывается.", source: "Лекция 5, с. 4" },
+    { id: 76, topic: "5", type: "Теория", question: "Почему для одинакового изменения множества строк часто предпочтителен один UPDATE ... WHERE вместо курсора?", options: ["UPDATE всегда выполняется без транзакции", "СУБД оптимизирована для обработки наборов, и построчный обход может быть лишним", "Курсоры не могут читать строки", "Курсор автоматически удаляет обработанные строки", "Наборный SQL не поддерживает условия"], correct: 1, explanation: "Курсор оправдан, когда действительно нужна последовательная обработка.", source: "Лекция 5, с. 4" },
+    { id: 77, topic: "5", type: "Определение", question: "Какое описание соответствует транзакции?", options: ["Логическая единица работы из одной или нескольких связанных операций", "Псевдоним результата агрегирования", "Список имён столбцов одной таблицы", "Способ хранения только текстовых данных", "Отдельный индекс для каждого SELECT"], correct: 0, explanation: "Транзакция объединяет операции с общими правилами подтверждения и отмены.", source: "Лекция 5, с. 4–5" },
+    { id: 78, topic: "5", type: "Ситуация", question: "В транзакции изменили email, затем выполнили ROLLBACK до COMMIT. Что произойдёт с этим изменением?", options: ["Оно превратится в DEFAULT", "Оно сохранится только в обычном VIEW", "Оно будет отменено", "Оно будет зафиксировано", "Будет удалена таблица students"], correct: 2, explanation: "ROLLBACK отменяет незакоммиченные изменения текущей транзакции.", source: "Лекция 5, с. 5" },
+    { id: 79, topic: "5", type: "Команда", question: "Какой оператор подтверждает и фиксирует успешную транзакцию?", options: ["DECLARE", "FETCH", "SAVEPOINT", "COMMIT", "ROLLBACK"], correct: 3, explanation: "COMMIT завершает транзакцию с подтверждением изменений.", source: "Лекция 5, с. 5" },
+    { id: 80, topic: "5", type: "Ситуация", question: "Выполнены изменение A, SAVEPOINT sp, изменение B, ROLLBACK TO SAVEPOINT sp и COMMIT. Что сохранится при отсутствии других ошибок?", options: ["Ни A, ни B", "Изменение A, но не B", "Только название точки сохранения", "Только B", "Оба изменения"], correct: 1, explanation: "Откат к точке отменяет последующие изменения, сохраняя предыдущие.", source: "Лекция 5, с. 5" },
+    { id: 81, topic: "5", type: "Теория", question: "Две обязательные операции должны сохраниться обе или не сохраниться ни одна. Какое свойство ACID отражает это требование?", options: ["Сортировка результатов", "Isolation — изоляция", "Consistency — согласованность", "Atomicity — атомарность", "Durability — долговечность"], correct: 3, explanation: "Атомарность исключает сохранение только части логической операции.", source: "Лекция 5, с. 5" },
+    { id: 82, topic: "5", type: "Теория", question: "Как правильно сопоставлены остальные свойства ACID?", options: ["Consistency — сортировка; Isolation — резервирование имён; Durability — удаление дубликатов", "Consistency — обход курсора; Isolation — создание индекса; Durability — смена типа", "Consistency — порядок столбцов; Isolation — псевдоним; Durability — группировка", "Consistency — соблюдение правил; Isolation — контролируемое взаимодействие транзакций; Durability — сохранность подтверждённого результата", "Consistency — возврат функции; Isolation — объединение таблиц; Durability — фильтрация"], correct: 3, explanation: "Эти свойства описывают корректность и надёжность транзакционной обработки.", source: "Лекция 5, с. 5–6" },
+    { id: 83, topic: "6", type: "Определение", question: "Как запускается обычный триггер изменения данных?", options: ["Только SELECT имени триггера как скалярной функции", "Только при создании резервной копии", "Автоматически при заданном событии на связанной таблице или представлении", "Только при открытии Query Tool", "Только прямым CALL имени триггера"], correct: 2, explanation: "Триггер связывает событие изменения данных с выполнением функции.", source: "Лекция 6, с. 1" },
+    { id: 84, topic: "6", type: "Теория", question: "Какие два объекта образуют механизм обычного триггера PostgreSQL?", options: ["VIEW и обязательный курсор", "Триггерная функция RETURNS TRIGGER и привязка через CREATE TRIGGER", "SQL-функция NUMERIC и COMMIT", "Индекс и FOREIGN KEY", "Таблица и псевдоним AS"], correct: 1, explanation: "Функция содержит логику, CREATE TRIGGER связывает её с событием.", source: "Лекция 6, с. 1" },
+    { id: 85, topic: "6", type: "Ситуация", question: "Нужно преобразовать вставляемый email в нижний регистр до сохранения строки. Какой тип триггера подходит?", options: ["Только AFTER TRUNCATE", "AFTER DELETE с изменением OLD.email", "FOR EACH STATEMENT с прямым доступом к отдельной NEW.email", "AFTER INSERT с простым присваиванием NEW.email", "BEFORE INSERT FOR EACH ROW с изменением NEW.email"], correct: 4, explanation: "Строчный BEFORE INSERT может изменить предлагаемую строку до вставки.", source: "Лекция 6, с. 1" },
+    { id: 86, topic: "6", type: "Расчёт", question: "Один UPDATE реально изменяет 12 строк. Сколько раз сработают обычный строчный и операторный триггеры этого события без дополнительных фильтров?", options: ["1 и 1", "1 и 12", "12 и 1", "12 и 12", "0 и 1"], correct: 2, explanation: "FOR EACH ROW работает по каждой строке, FOR EACH STATEMENT — по команде.", source: "Лекция 6, с. 1" },
+    { id: 87, topic: "6", type: "Ситуация", question: "UPDATE не затронул ни одной строки. Сколько раз сработает обычный триггер FOR EACH STATEMENT этого события?", options: ["По числу всех строк таблицы", "0", "1", "По числу столбцов таблицы", "2"], correct: 2, explanation: "Операторный триггер срабатывает и при нуле затронутых строк.", source: "Лекция 6, с. 1" },
+    { id: 88, topic: "6", type: "Теория", question: "Какие псевдозаписи содержат состояния строки в строчном UPDATE-триггере?", options: ["Только OLD, NEW недоступна для UPDATE", "OLD — до изменения, NEW — предлагаемое или новое состояние", "OLD — новая строка, NEW — старая", "Только NEW, OLD недоступна для UPDATE", "Обе всегда содержат NULL"], correct: 1, explanation: "UPDATE предоставляет старое и новое состояния строки.", source: "Лекция 6, с. 2" },
+    { id: 89, topic: "6", type: "Теория", question: "Какая псевдозапись содержит удаляемую строку в строчном DELETE-триггере?", options: ["OLD", "NEW", "CURRENT_TIMESTAMP", "current_user", "TG_OP"], correct: 0, explanation: "После удаления нового состояния строки нет; исходные данные доступны через OLD.", source: "Лекция 6, с. 2" },
+    { id: 90, topic: "6", type: "Ситуация", question: "BEFORE INSERT FOR EACH ROW возвращает NULL для одной строки. Что означает это возвращаемое значение?", options: ["Обязательно удалить таблицу", "Вставить строку, заменив все поля на NULL", "Пропустить вставку этой строки без само по себе обязательного отката всей транзакции", "Обязательно подтвердить транзакцию", "Создать запись в таблице аудита автоматически"], correct: 2, explanation: "В строчном BEFORE-триггере NULL позволяет пропустить текущую операцию строки.", source: "Лекция 6, с. 2" },
+    { id: 91, topic: "6", type: "Теория", question: "Если AFTER UPDATE-триггер просто присвоит NEW.grade = 100, запишется ли это присваивание в обновлённую строку автоматически?", options: ["Да, если OLD.grade не равно NULL", "Да, если вернуть NEW независимо от типа триггера", "Нет, простое изменение NEW в AFTER не переписывает сохранённую строку", "Да, но только после следующего SELECT", "Да, AFTER всегда повторно записывает NEW"], correct: 2, explanation: "Для изменения предлагаемой строки используют BEFORE; возвращаемое значение AFTER игнорируется.", source: "Лекция 6, с. 1–2" },
+    { id: 92, topic: "6", type: "Команда", question: "Какой контекстный параметр позволяет отличить UPDATE от DELETE внутри триггерной функции?", options: ["NEW.id", "OLD.id", "clock_timestamp()", "current_user", "TG_OP"], correct: 4, explanation: "TG_OP содержит имя операции, вызвавшей триггер.", source: "Лекция 6, с. 2" },
+    { id: 93, topic: "6", type: "Команда", question: "Зачем в аудите используется OLD.grade IS DISTINCT FROM NEW.grade?", options: ["Чтобы выполнить сортировку аудита", "Чтобы удалить одинаковые оценки из исходной таблицы", "Чтобы посчитать средний балл", "Чтобы проверить только наличие первичного ключа", "Чтобы обнаружить изменение оценки с корректной обработкой NULL"], correct: 4, explanation: "IS DISTINCT FROM сравнивает значения, считая NULL сравнимым для этой проверки.", source: "Лекция 6, с. 2" },
+    { id: 94, topic: "6", type: "Ситуация", question: "UPDATE и запись аудита выполнены в одной транзакции, затем сделан ROLLBACK. Что произойдёт с обоими изменениями?", options: ["Оба будут отменены", "Аудит отменится, UPDATE обязательно сохранится", "Оба будут автоматически подтверждены AFTER-триггером", "UPDATE отменится, аудит обязательно сохранится", "Откат удалит определение триггера"], correct: 0, explanation: "Обычный триггер работает в транзакции вызвавшей его команды; AFTER не означает COMMIT.", source: "Лекция 6, с. 2, 4" },
+    { id: 95, topic: "6", type: "Расчёт", question: "Что вернёт SELECT concat_ws(' ', 'Иван', NULL, 'Иванов');?", options: ["NULL", "ИванИванов", "Иван Иванов", "Иван NULL Иванов", "Иван  Иванов с двумя пробелами"], correct: 2, explanation: "concat_ws пропускает NULL среди объединяемых значений.", source: "Лекция 6, с. 3" },
+    { id: 96, topic: "6", type: "Расчёт", question: "Что вернёт SELECT round(4.6666::numeric, 2), abs(-15);?", options: ["4.67 и −15", "4.67 и 15", "4.66 и −15", "4.6666 и 15", "5 и 15"], correct: 1, explanation: "round округляет numeric, abs возвращает модуль числа.", source: "Лекция 6, с. 3" },
+    { id: 97, topic: "6", type: "Команда", question: "Как получить нижний регистр текста и число его символов?", options: ["lower(text_value) и length(text_value)", "upper(text_value) и abs(text_value)", "lower(text_value) и power(text_value, 2)", "round(text_value, 2) и length(text_value)", "concat_ws(text_value) и now()"], correct: 0, explanation: "lower преобразует регистр, length(text) считает символы.", source: "Лекция 6, с. 3" },
+    { id: 98, topic: "6", type: "Расчёт", question: "Что вернут COALESCE(NULL, 0, 5) и NULLIF(5, 5)?", options: ["0 и NULL", "NULL и NULL", "NULL и 5", "5 и 0", "0 и 5"], correct: 0, explanation: "COALESCE берёт первый не-NULL, NULLIF возвращает NULL при равных аргументах.", source: "Лекция 6, с. 3" },
+    { id: 99, topic: "6", type: "Теория", question: "Чем now() отличается от clock_timestamp() в длительной транзакции?", options: ["now() меняется после каждой строки, clock_timestamp() фиксируется в BEGIN", "now() отражает начало транзакции, clock_timestamp() — фактическое время вызова", "Обе функции всегда возвращают только дату без времени", "clock_timestamp() всегда возвращает NULL до COMMIT", "now() вычисляет возраст, clock_timestamp() — число строк"], correct: 1, explanation: "Для времени фактического события внутри длительной транзакции подходит clock_timestamp().", source: "Лекция 6, с. 3–4" },
+    { id: 100, topic: "6", type: "Ситуация", question: "Триггер таблицы A обновляет B, а триггер B снова обновляет A без условия остановки. Какой риск возникает?", options: ["Преобразование обоих триггеров в VIEW", "Автоматическое устранение любых блокировок", "Обязательное ускорение всех UPDATE", "Рекурсивное выполнение и исчерпание ресурсов", "Автоматическая нормализация до 3НФ"], correct: 3, explanation: "Циклические побочные изменения могут вызвать неограниченную рекурсию.", source: "Лекция 6, с. 4" }
+  ];
+
+  // ======================== СОСТОЯНИЕ ========================
+  let userAnswers = new Array(questionsData.length).fill(null);
+  let checked = false;
+  let showExplanations = false;
+
+  // ======================== ОТРИСОВКА ========================
+  const container = document.getElementById('questionsContainer');
+
+  function renderQuestions() {
+    container.innerHTML = '';
+    questionsData.forEach((q, idx) => {
+      const card = document.createElement('div');
+      card.className = 'question-card';
+      card.id = `q-${idx}`;
+
+      // Заголовок
+      const header = document.createElement('div');
+      header.className = 'question-header';
+      header.innerHTML = `
+                <span class="q-num">Вопрос ${q.id}</span>
+                <span class="q-topic">${q.topic} · ${q.type}</span>
+            `;
+      card.appendChild(header);
+
+      // Текст
+      const qText = document.createElement('div');
+      qText.className = 'q-text';
+      qText.textContent = q.question;
+      card.appendChild(qText);
+
+      // Варианты
+      const optionsDiv = document.createElement('div');
+      optionsDiv.className = 'options';
+      q.options.forEach((opt, optIdx) => {
+        const optDiv = document.createElement('div');
+        optDiv.className = 'option';
+        if (userAnswers[idx] === optIdx) optDiv.classList.add('selected');
+
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = `q${idx}`;
+        radio.value = optIdx;
+        radio.checked = userAnswers[idx] === optIdx;
+        radio.id = `q${idx}_opt${optIdx}`;
+
+        const label = document.createElement('label');
+        label.htmlFor = `q${idx}_opt${optIdx}`;
+        label.textContent = opt;
+
+        radio.addEventListener('change', (e) => {
+          userAnswers[idx] = parseInt(e.target.value);
+          updateCardSelection(idx);
+          updateStats();
+        });
+
+        optDiv.appendChild(radio);
+        optDiv.appendChild(label);
+        optionsDiv.appendChild(optDiv);
+      });
+      card.appendChild(optionsDiv);
+
+      // Пояснение
+      const expDiv = document.createElement('div');
+      expDiv.className = 'explanation';
+      expDiv.id = `exp-${idx}`;
+      expDiv.innerHTML = `<strong>Пояснение:</strong> ${q.explanation}<div class="source">${q.source}</div>`;
+      card.appendChild(expDiv);
+
+      // Результат
+      const resDiv = document.createElement('div');
+      resDiv.className = 'result-bar';
+      resDiv.id = `res-${idx}`;
+      card.appendChild(resDiv);
+
+      container.appendChild(card);
+    });
+    updateStats();
+    if (checked) applyCheckVisuals();
+    if (showExplanations) document.querySelectorAll('.explanation').forEach(el => el.classList.add('show'));
+  }
+
+  function updateCardSelection(idx) {
+    const card = document.getElementById(`q-${idx}`);
+    const options = card.querySelectorAll('.option');
+    options.forEach((opt, optIdx) => {
+      opt.classList.toggle('selected', userAnswers[idx] === optIdx);
+    });
+    // Сброс визуальной проверки, если ответ изменился
+    if (checked) {
+      card.classList.remove('correct', 'incorrect');
+      document.getElementById(`res-${idx}`).innerHTML = '';
+      // Убираем старые метки правильности
+      options.forEach(opt => opt.classList.remove('correct-answer', 'wrong-answer'));
+    }
+  }
+
+  function applyCheckVisuals() {
+    let correctCount = 0;
+    let incorrectCount = 0;
+    questionsData.forEach((q, idx) => {
+      const card = document.getElementById(`q-${idx}`);
+      const options = card.querySelectorAll('.option');
+      const resDiv = document.getElementById(`res-${idx}`);
+      const selected = userAnswers[idx];
+
+      // Убираем старые классы
+      card.classList.remove('correct', 'incorrect');
+      options.forEach(opt => opt.classList.remove('correct-answer', 'wrong-answer'));
+
+      if (selected === null) {
+        resDiv.innerHTML = '<span style="color:#64748b;">⏳ Нет ответа</span>';
+        return;
+      }
+
+      const isCorrect = selected === q.correct;
+      if (isCorrect) {
+        card.classList.add('correct');
+        options[selected].classList.add('correct-answer');
+        resDiv.innerHTML = '<span class="correct-mark">✅ Верно</span>';
+        correctCount++;
+      } else {
+        card.classList.add('incorrect');
+        options[selected].classList.add('wrong-answer');
+        options[q.correct].classList.add('correct-answer');
+        resDiv.innerHTML = `<span class="incorrect-mark">❌ Ошибка. Правильный ответ: ${q.options[q.correct]}</span>`;
+        incorrectCount++;
+      }
+    });
+    // Обновляем глобальную статистику
+    document.getElementById('correctCount').textContent = correctCount;
+    document.getElementById('incorrectCount').textContent = incorrectCount;
+    document.getElementById('scoreDisplay').textContent = `${correctCount} / 100`;
+  }
+
+  function updateStats() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('answeredCount').textContent = answered;
+    document.getElementById('progressText').textContent = `${answered} из 100 answered`;
+    if (!checked) {
+      // Обновляем счётчик правильных/неправильных только если не проверено
+      let correct = 0, incorrect = 0;
+      userAnswers.forEach((ans, idx) => {
+        if (ans !== null) {
+          if (ans === questionsData[idx].correct) correct++;
+          else incorrect++;
+        }
+      });
+      document.getElementById('correctCount').textContent = correct;
+      document.getElementById('incorrectCount').textContent = incorrect;
+      document.getElementById('scoreDisplay').textContent = `${correct} / 100`;
+    }
+  }
+
+  // ======================== ДЕЙСТВИЯ ========================
+  function checkAll() {
+    checked = true;
+    applyCheckVisuals();
+  }
+
+  function resetAll() {
+    userAnswers.fill(null);
+    checked = false;
+    showExplanations = false;
+    document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+    document.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct-answer', 'wrong-answer'));
+    document.querySelectorAll('.question-card').forEach(c => c.classList.remove('correct', 'incorrect'));
+    document.querySelectorAll('.result-bar').forEach(r => r.innerHTML = '');
+    document.querySelectorAll('.explanation').forEach(e => e.classList.remove('show'));
+    document.getElementById('toggleExplainBtn').textContent = 'Показать пояснения';
+    updateStats();
+    document.getElementById('correctCount').textContent = '0';
+    document.getElementById('incorrectCount').textContent = '0';
+    document.getElementById('scoreDisplay').textContent = '0 / 100';
+    document.getElementById('answeredCount').textContent = '0';
+  }
+
+  function toggleExplanations() {
+    showExplanations = !showExplanations;
+    document.querySelectorAll('.explanation').forEach(el => el.classList.toggle('show', showExplanations));
+    document.getElementById('toggleExplainBtn').textContent = showExplanations ? 'Скрыть пояснения' : 'Показать пояснения';
+  }
+
+  // ======================== ИНИЦИАЛИЗАЦИЯ ========================
+  document.addEventListener('DOMContentLoaded', () => {
+    renderQuestions();
+
+    document.getElementById('checkBtn').addEventListener('click', checkAll);
+    document.getElementById('checkBtn2').addEventListener('click', checkAll);
+    document.getElementById('resetBtn').addEventListener('click', resetAll);
+    document.getElementById('toggleExplainBtn').addEventListener('click', toggleExplanations);
+    document.getElementById('scrollTopBtn').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  });
+</script>
+</body>
+</html>
